@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { ExerciseData } from "@/lib/types";
+import { matchGoal } from "@/lib/goals";
 
 const actionColors = {
   increase: "text-green-400 bg-green-400/10 border-green-400/20",
@@ -16,22 +17,29 @@ const actionIcons = {
 };
 
 export default function ExerciseCard({ exercise }: { exercise: ExerciseData }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const { suggestion } = exercise;
   const colorClass = actionColors[suggestion.action] || actionColors.hold;
   const icon = actionIcons[suggestion.action] || "\u2192";
+  const goal = matchGoal(exercise.name);
 
   return (
-    <div className="border border-gray-800 rounded-lg overflow-hidden">
+    <div className="border border-gray-800 rounded-lg overflow-hidden bg-gray-900/50">
       <button
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-800/50 transition-colors text-left"
       >
         <div className="flex items-center gap-3">
           <span className="font-medium text-gray-100">{exercise.name}</span>
+          {goal && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/25 font-medium">
+              🎯 {goal.label}
+            </span>
+          )}
           {suggestion.suggested_weight_lbs && (
-            <span className="text-sm text-gray-400">
-              {suggestion.suggested_weight_lbs} lbs
+            <span className="text-sm font-bold text-emerald-400">
+              → {suggestion.suggested_weight_lbs} lbs
+              {suggestion.suggested_reps ? ` × ${suggestion.suggested_reps}` : ""}
             </span>
           )}
         </div>
@@ -54,25 +62,29 @@ export default function ExerciseCard({ exercise }: { exercise: ExerciseData }) {
 
       {open && (
         <div className="px-4 pb-4 space-y-3 border-t border-gray-800">
-          {/* Coach suggestion */}
-          <div className={`mt-3 p-3 rounded-md border text-sm ${colorClass}`}>
-            {suggestion.suggestion}
+          {/* Coach suggestion — prominent */}
+          <div className={`mt-3 p-3 rounded-md border text-sm font-medium ${colorClass}`}>
+            💡 {suggestion.suggestion}
           </div>
 
           {/* Target sets */}
           {exercise.target_sets.length > 0 && (
             <div>
               <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
-                Target
+                Target Sets
               </p>
               <div className="flex gap-2 flex-wrap">
                 {exercise.target_sets.map((s, i) => (
                   <span
                     key={i}
-                    className="text-sm bg-gray-800 px-2 py-1 rounded"
+                    className="text-sm bg-gray-800 px-3 py-1.5 rounded-md border border-gray-700"
                   >
-                    {s.weight_lbs ? `${s.weight_lbs} lbs` : "BW"}{" "}
-                    {s.reps ? `× ${s.reps}` : ""}
+                    <span className="font-semibold text-gray-200">
+                      {s.weight_lbs ? `${s.weight_lbs} lbs` : "BW"}
+                    </span>{" "}
+                    <span className="text-gray-400">
+                      {s.reps ? `× ${s.reps}` : ""}
+                    </span>
                   </span>
                 ))}
               </div>
@@ -83,7 +95,7 @@ export default function ExerciseCard({ exercise }: { exercise: ExerciseData }) {
           {exercise.recent_sessions.length > 0 && (
             <div>
               <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
-                Recent
+                Recent History
               </p>
               <div className="space-y-1">
                 {exercise.recent_sessions.map((session, i) => (
@@ -105,7 +117,7 @@ export default function ExerciseCard({ exercise }: { exercise: ExerciseData }) {
           {/* Est 1RM */}
           {exercise.est_1rm_lbs && (
             <p className="text-xs text-gray-500">
-              Est 1RM: {exercise.est_1rm_lbs} lbs
+              Est 1RM: {Math.round(exercise.est_1rm_lbs)} lbs
             </p>
           )}
         </div>

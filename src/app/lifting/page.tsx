@@ -1,16 +1,21 @@
-import { getLiftingDetail } from "@/lib/api";
+import { getLiftingDetail, getLiftingRoutines } from "@/lib/api";
 import LoadingError from "@/components/LoadingError";
 import LiftOverview from "@/components/lifting/LiftOverview";
+import GoalProgress from "@/components/lifting/GoalProgress";
+import GymSchedule from "@/components/lifting/GymSchedule";
 import MuscleGroupBreakdown from "@/components/lifting/MuscleGroupBreakdown";
-import KeyExercises from "@/components/lifting/KeyExercises";
 import VolumeCharts from "@/components/lifting/VolumeCharts";
+import KeyExercises from "@/components/lifting/KeyExercises";
 import RecentWorkouts from "@/components/lifting/RecentWorkouts";
 
 export const revalidate = 300; // ISR: 5 minutes
 
 export default async function LiftingPage() {
   try {
-    const data = await getLiftingDetail();
+    const [data, routines] = await Promise.all([
+      getLiftingDetail(),
+      getLiftingRoutines(),
+    ]);
 
     return (
       <div className="space-y-6 pb-8">
@@ -23,12 +28,13 @@ export default async function LiftingPage() {
 
         <LiftOverview overview={data.overview} />
 
+        <GoalProgress exercises={data.key_exercises} />
+
+        <GymSchedule routines={routines} />
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <MuscleGroupBreakdown data={data.muscle_group_breakdown} />
-          <VolumeCharts
-            weeklyTrend={data.weekly_trend}
-            progression={data.progression}
-          />
+          <VolumeCharts progression={data.progression} />
         </div>
 
         <KeyExercises exercises={data.key_exercises} />

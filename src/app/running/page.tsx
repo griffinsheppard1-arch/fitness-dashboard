@@ -1,8 +1,10 @@
 import { getRunningDetail } from "@/lib/api";
 import RunOverview from "@/components/running/RunOverview";
+import UpcomingRuns from "@/components/running/UpcomingRuns";
 import RecentRuns from "@/components/running/RecentRuns";
 import PerformanceCharts from "@/components/running/PerformanceCharts";
 import PlanCompliance from "@/components/running/PlanCompliance";
+import SuggestedRoutes from "@/components/running/SuggestedRoutes";
 import LoadingError from "@/components/LoadingError";
 
 export const revalidate = 300; // ISR: 5 minutes
@@ -25,6 +27,13 @@ export default async function RunningPage() {
         <section>
           <RunOverview overview={data.overview} />
         </section>
+
+        {/* Upcoming Runs */}
+        {data.upcoming_runs && data.upcoming_runs.length > 0 && (
+          <section>
+            <UpcomingRuns runs={data.upcoming_runs} />
+          </section>
+        )}
 
         {/* Performance Charts */}
         <section className="space-y-3">
@@ -50,6 +59,11 @@ export default async function RunningPage() {
             Recent Runs
           </h2>
           <RecentRuns runs={data.runs} />
+        </section>
+
+        {/* Suggested Routes */}
+        <section>
+          <SuggestedRoutes />
         </section>
       </div>
     );

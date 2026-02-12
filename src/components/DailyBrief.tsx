@@ -44,17 +44,14 @@ export default function DailyBrief({ data }: { data: DailyData }) {
         </div>
       </Link>
 
-      {/* Header + Greeting */}
-      <div>
-        <h1 className="text-2xl font-bold">{data.display_date}</h1>
-        <div className="mt-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-4 flex items-start gap-3">
-          <span className="text-2xl">
-            {data.workout_type === "double" ? "\uD83D\uDCAA" :
-             data.workout_type === "gym" ? "\uD83C\uDFCB\uFE0F" :
-             data.workout_type === "run" ? "\uD83C\uDFC3" : "\uD83D\uDE34"}
-          </span>
-          <p className="text-emerald-300">{data.greeting}</p>
-        </div>
+      {/* Greeting */}
+      <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-4 flex items-start gap-3">
+        <span className="text-2xl">
+          {data.workout_type === "double" ? "\uD83D\uDCAA" :
+           data.workout_type === "gym" ? "\uD83C\uDFCB\uFE0F" :
+           data.workout_type === "run" ? "\uD83C\uDFC3" : "\uD83D\uDE34"}
+        </span>
+        <p className="text-emerald-300">{data.greeting}</p>
       </div>
 
       {/* During marathon training: Run section first if it's a run day */}

@@ -3,11 +3,11 @@ import type {
   RunningTrendPoint,
   LiftingTrendPoint,
 } from "@/lib/types";
+import { LIFTING_GOALS } from "@/lib/goals";
 import WeekAtGlance from "./WeekAtGlance";
 import ComparisonTable from "./ComparisonTable";
 import RunningTrend from "./RunningTrend";
 import LiftingVolume from "./LiftingVolume";
-import LiftProgression from "./LiftProgression";
 import Link from "next/link";
 
 const RACE_DATE = new Date("2026-03-01");
@@ -44,9 +44,7 @@ export default function WeeklyDashboard({
       {/* Training Load Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Weekly Summary</h1>
-          <p className="text-gray-400 text-sm">{data.display_range}</p>
-          <p className={`text-sm mt-1 ${loadMsg.color}`}>{loadMsg.msg}</p>
+          <p className={`text-sm ${loadMsg.color}`}>{loadMsg.msg}</p>
         </div>
         <Link href="/race">
           <div className="bg-rose-500/10 border border-rose-500/20 rounded-lg px-4 py-2 text-center hover:border-rose-500/40 transition-colors">
@@ -76,6 +74,46 @@ export default function WeeklyDashboard({
           completed={adherence.completed}
           percentage={adherence.percentage}
         />
+      </section>
+
+      {/* Next Week Preview — moved to top for quick schedule reference */}
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <span className="text-xl">&#x1F4C5;</span> Next Week Preview
+        </h2>
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 overflow-x-auto">
+          <div className="grid grid-cols-7 gap-2 min-w-[500px]">
+            {next_week.map((day) => {
+              const hasGym = !!day.gym;
+              const hasRun = !!day.run;
+              const isRest = !hasGym && !hasRun;
+              return (
+                <div
+                  key={day.date}
+                  className={`rounded-lg p-3 text-center text-xs ${
+                    isRest
+                      ? "bg-gray-800/50 border border-gray-700/50"
+                      : "bg-gray-800 border border-gray-700"
+                  }`}
+                >
+                  <p className="font-semibold text-gray-300 mb-1">{day.day_name.slice(0, 3)}</p>
+                  <p className="text-gray-500 text-[10px] mb-2">{day.date.slice(5)}</p>
+                  {hasRun && (
+                    <p className="text-blue-400 truncate" title={day.run}>
+                      &#x1F3C3; {day.run}
+                    </p>
+                  )}
+                  {hasGym && (
+                    <p className="text-violet-400 truncate" title={day.gym}>
+                      &#x1F3CB;&#xFE0F; {day.gym}
+                    </p>
+                  )}
+                  {isRest && <p className="text-gray-600">Rest</p>}
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </section>
 
       {/* Running */}
@@ -170,11 +208,32 @@ export default function WeeklyDashboard({
           <StatCard label="Duration" value={lifting.this_week.duration || "—"} prevValue={lifting.last_week.duration || "—"} color="text-violet-400" />
         </div>
 
-        {lifting.key_lifts && lifting.key_lifts.length > 0 && (
-          <LiftProgression keyLifts={lifting.key_lifts} />
-        )}
-
         <LiftingVolume data={liftTrend} />
+
+        {/* Goals Snapshot */}
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-semibold text-gray-400">🎯 Lifting Goals</p>
+            <Link href="/lifting" className="text-[10px] text-violet-400 hover:text-violet-300">
+              Details →
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {LIFTING_GOALS.map((goal) => (
+              <div
+                key={goal.label}
+                className="bg-gray-950 rounded-lg p-2.5 text-center"
+              >
+                <p className="text-[11px] font-medium text-gray-300 truncate">
+                  {goal.label}
+                </p>
+                <p className="text-[10px] text-gray-500 mt-0.5">
+                  {goal.goalWeight} lbs × {goal.goalReps}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
 
       {/* Nutrition */}
@@ -230,45 +289,6 @@ export default function WeeklyDashboard({
         </section>
       )}
 
-      {/* Next Week */}
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold flex items-center gap-2">
-          <span className="text-xl">&#x1F4C5;</span> Next Week Preview
-        </h2>
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 overflow-x-auto">
-          <div className="grid grid-cols-7 gap-2 min-w-[500px]">
-            {next_week.map((day) => {
-              const hasGym = !!day.gym;
-              const hasRun = !!day.run;
-              const isRest = !hasGym && !hasRun;
-              return (
-                <div
-                  key={day.date}
-                  className={`rounded-lg p-3 text-center text-xs ${
-                    isRest
-                      ? "bg-gray-800/50 border border-gray-700/50"
-                      : "bg-gray-800 border border-gray-700"
-                  }`}
-                >
-                  <p className="font-semibold text-gray-300 mb-1">{day.day_name.slice(0, 3)}</p>
-                  <p className="text-gray-500 text-[10px] mb-2">{day.date.slice(5)}</p>
-                  {hasRun && (
-                    <p className="text-blue-400 truncate" title={day.run}>
-                      &#x1F3C3; {day.run}
-                    </p>
-                  )}
-                  {hasGym && (
-                    <p className="text-violet-400 truncate" title={day.gym}>
-                      &#x1F3CB;&#xFE0F; {day.gym}
-                    </p>
-                  )}
-                  {isRest && <p className="text-gray-600">Rest</p>}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
     </div>
   );
 }

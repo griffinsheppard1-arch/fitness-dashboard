@@ -236,6 +236,8 @@ export interface RunActivity {
   suffer_score?: number;
   cadence?: number;
   stride_length?: number;
+  summary_polyline?: string;
+  start_latlng?: string;
   splits?: RunSplit[];
   best_efforts?: BestEffort[];
 }
@@ -257,6 +259,14 @@ export interface PlanComplianceDay {
   actual_miles?: number;
 }
 
+export interface UpcomingRun {
+  date: string;
+  summary?: string;
+  distance_miles?: number;
+  duration_seconds?: number;
+  workout_type?: string;
+}
+
 export interface RunningDetailData {
   overview: {
     all_time_miles: number;
@@ -272,6 +282,7 @@ export interface RunningDetailData {
   runs: RunActivity[];
   weekly_trend: RunningTrendPoint[];
   plan_compliance: PlanComplianceDay[];
+  upcoming_runs?: UpcomingRun[];
 }
 
 // ============================================================
@@ -364,6 +375,7 @@ export interface RoutineExercise {
 export interface Routine {
   id: string;
   title: string;
+  day_of_week?: string;
   exercises: RoutineExercise[];
 }
 

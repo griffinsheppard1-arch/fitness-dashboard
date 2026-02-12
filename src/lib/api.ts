@@ -34,12 +34,14 @@ async function fetchAPI<T>(path: string, revalidate = 300): Promise<T> {
 }
 
 // Existing endpoints
-export async function getDailyData(): Promise<DailyData> {
-  return fetchAPI<DailyData>("/api/dashboard/daily");
+export async function getDailyData(date?: string): Promise<DailyData> {
+  const params = date ? `?date=${date}` : "";
+  return fetchAPI<DailyData>(`/api/dashboard/daily${params}`);
 }
 
-export async function getWeeklyData(): Promise<WeeklyData> {
-  return fetchAPI<WeeklyData>("/api/dashboard/weekly");
+export async function getWeeklyData(weekStart?: string): Promise<WeeklyData> {
+  const params = weekStart ? `?week_start=${weekStart}` : "";
+  return fetchAPI<WeeklyData>(`/api/dashboard/weekly${params}`);
 }
 
 export async function getRunningTrend(

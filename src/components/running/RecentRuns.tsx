@@ -1,7 +1,10 @@
 "use client";
 
 import { useState, Fragment } from "react";
+import dynamic from "next/dynamic";
 import type { RunActivity, RunSplit } from "@/lib/types";
+
+const RunRouteMap = dynamic(() => import("./RunRouteMap"), { ssr: false });
 
 interface RecentRunsProps {
   runs: RunActivity[];
@@ -84,7 +87,7 @@ export default function RecentRuns({ runs }: RecentRunsProps) {
           <tbody>
             {displayRuns.map((run) => {
               const isExpanded = expandedRows.has(run.id);
-              const hasSplits = run.splits && run.splits.length > 0;
+              const hasSplits = (run.splits && run.splits.length > 0) || run.summary_polyline;
 
               return (
                 <Fragment key={run.id}>
@@ -142,10 +145,23 @@ export default function RecentRuns({ runs }: RecentRunsProps) {
                     </td>
                   </tr>
 
-                  {isExpanded && run.splits && run.splits.length > 0 && (
+                  {isExpanded && (
                     <tr>
                       <td colSpan={9} className="px-4 py-3 bg-gray-950/50">
-                        <div className="pl-4 border-l-2 border-blue-500/30">
+                        <div className="pl-4 border-l-2 border-blue-500/30 space-y-3">
+                          {/* Route Map */}
+                          {run.summary_polyline && (
+                            <div>
+                              <p className="text-xs font-medium text-gray-500 mb-2">
+                                Route
+                              </p>
+                              <RunRouteMap run={run} />
+                            </div>
+                          )}
+
+                          {/* Mile Splits */}
+                          {run.splits && run.splits.length > 0 && (
+                          <div>
                           <p className="text-xs font-medium text-gray-500 mb-2">
                             Mile Splits
                           </p>
@@ -198,6 +214,8 @@ export default function RecentRuns({ runs }: RecentRunsProps) {
                                 ))}
                               </div>
                             </div>
+                          )}
+                          </div>
                           )}
                         </div>
                       </td>
