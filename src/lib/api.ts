@@ -3,6 +3,12 @@ import type {
   WeeklyData,
   RunningTrendPoint,
   LiftingTrendPoint,
+  RunningDetailData,
+  RunningScheduleData,
+  LiftingDetailData,
+  LiftingRoutinesData,
+  NutritionDetailData,
+  RacePrepData,
 } from "./types";
 
 const API_URL =
@@ -20,6 +26,7 @@ async function fetchAPI<T>(path: string, revalidate = 300): Promise<T> {
   return res.json();
 }
 
+// Existing endpoints
 export async function getDailyData(): Promise<DailyData> {
   return fetchAPI<DailyData>("/api/dashboard/daily");
 }
@@ -38,4 +45,29 @@ export async function getLiftingTrend(
   weeks = 12
 ): Promise<LiftingTrendPoint[]> {
   return fetchAPI<LiftingTrendPoint[]>(`/api/lifting/trend?weeks=${weeks}`);
+}
+
+// New endpoints for V2 tabs
+export async function getRunningDetail(): Promise<RunningDetailData> {
+  return fetchAPI<RunningDetailData>("/api/running/detail");
+}
+
+export async function getRunningSchedule(): Promise<RunningScheduleData> {
+  return fetchAPI<RunningScheduleData>("/api/running/schedule");
+}
+
+export async function getLiftingDetail(): Promise<LiftingDetailData> {
+  return fetchAPI<LiftingDetailData>("/api/lifting/detail");
+}
+
+export async function getLiftingRoutines(): Promise<LiftingRoutinesData> {
+  return fetchAPI<LiftingRoutinesData>("/api/lifting/routines");
+}
+
+export async function getNutritionDetail(): Promise<NutritionDetailData> {
+  return fetchAPI<NutritionDetailData>("/api/nutrition/detail");
+}
+
+export async function getRacePrepData(): Promise<RacePrepData> {
+  return fetchAPI<RacePrepData>("/api/race/prep");
 }

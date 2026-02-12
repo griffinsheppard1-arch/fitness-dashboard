@@ -8,6 +8,23 @@ import ComparisonTable from "./ComparisonTable";
 import RunningTrend from "./RunningTrend";
 import LiftingVolume from "./LiftingVolume";
 import LiftProgression from "./LiftProgression";
+import Link from "next/link";
+
+const RACE_DATE = new Date("2026-03-01");
+
+function getDaysToRace(): number {
+  const now = new Date();
+  const diff = RACE_DATE.getTime() - now.getTime();
+  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+}
+
+function getTrainingLoadMessage(data: WeeklyData): { msg: string; color: string } {
+  const pct = data.adherence.percentage;
+  if (pct >= 90) return { msg: "Crushing it this week — full compliance.", color: "text-emerald-400" };
+  if (pct >= 70) return { msg: "Solid week — mostly on track.", color: "text-blue-400" };
+  if (pct >= 50) return { msg: "Some sessions missed — let's finish strong.", color: "text-amber-400" };
+  return { msg: "Below plan this week. Prioritize key sessions.", color: "text-red-400" };
+}
 
 export default function WeeklyDashboard({
   data,
@@ -19,17 +36,40 @@ export default function WeeklyDashboard({
   liftTrend: LiftingTrendPoint[];
 }) {
   const { running, lifting, nutrition, adherence, next_week } = data;
+  const daysToRace = getDaysToRace();
+  const loadMsg = getTrainingLoadMessage(data);
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold">Weekly Summary</h1>
-        <p className="text-gray-400 text-sm">{data.display_range}</p>
+      {/* Training Load Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">Weekly Summary</h1>
+          <p className="text-gray-400 text-sm">{data.display_range}</p>
+          <p className={`text-sm mt-1 ${loadMsg.color}`}>{loadMsg.msg}</p>
+        </div>
+        <Link href="/race">
+          <div className="bg-rose-500/10 border border-rose-500/20 rounded-lg px-4 py-2 text-center hover:border-rose-500/40 transition-colors">
+            <span className="text-xl font-black text-rose-400">{daysToRace}</span>
+            <p className="text-xs text-gray-400">days to race</p>
+          </div>
+        </Link>
       </div>
 
-      {/* Adherence */}
-      <section className="bg-gray-900 border border-gray-800 rounded-lg p-4">
+      {/* Adherence — more prominent */}
+      <section className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold">Week Adherence</h2>
+          <div className="flex items-center gap-2">
+            <span className={`text-2xl font-bold ${
+              adherence.percentage >= 80 ? "text-emerald-400" :
+              adherence.percentage >= 60 ? "text-amber-400" : "text-red-400"
+            }`}>
+              {adherence.percentage}%
+            </span>
+            <span className="text-sm text-gray-500">{adherence.completed}/{adherence.planned}</span>
+          </div>
+        </div>
         <WeekAtGlance
           days={adherence.days}
           planned={adherence.planned}
@@ -40,22 +80,50 @@ export default function WeeklyDashboard({
 
       {/* Running */}
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold flex items-center gap-2">
-          <span className="text-xl">&#x1F3C3;</span> Running Performance
-        </h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <span className="text-xl">&#x1F3C3;</span> Running Performance
+          </h2>
+          <Link href="/running" className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
+            View details &rarr;
+          </Link>
+        </div>
 
-        <div className="bg-gray-900 border border-gray-800 rounded-lg p-4">
+        {/* Quick stats row */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <StatCard
+            label="Miles"
+            value={running.this_week.miles}
+            prevValue={running.last_week.miles}
+            color="text-blue-400"
+          />
+          <StatCard
+            label="Runs"
+            value={running.this_week.runs}
+            prevValue={running.last_week.runs}
+            color="text-blue-400"
+          />
+          <StatCard
+            label="Avg Pace"
+            value={running.this_week.pace || "—"}
+            prevValue={running.last_week.pace || "—"}
+            color="text-blue-400"
+            suffix="/mi"
+          />
+          <StatCard
+            label="Avg HR"
+            value={running.this_week.avg_hr || "—"}
+            prevValue={running.last_week.avg_hr || "—"}
+            color="text-blue-400"
+            suffix=" bpm"
+          />
+        </div>
+
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
           <ComparisonTable
             title="Metric"
             showAverages
             rows={[
-              {
-                metric: "Runs",
-                thisWeek: running.this_week.runs,
-                lastWeek: running.last_week.runs,
-                fourWeek: running.four_week_avg.runs,
-                twelveWeek: running.twelve_week_avg.runs,
-              },
               {
                 metric: "Miles",
                 thisWeek: running.this_week.miles,
@@ -71,18 +139,11 @@ export default function WeeklyDashboard({
                 twelveWeek: running.twelve_week_avg.pace || "—",
               },
               {
-                metric: "Time",
-                thisWeek: running.this_week.time || "—",
-                lastWeek: running.last_week.time || "—",
-                fourWeek: running.four_week_avg.time || "—",
-                twelveWeek: running.twelve_week_avg.time || "—",
-              },
-              {
-                metric: "Avg HR",
-                thisWeek: running.this_week.avg_hr || "—",
-                lastWeek: running.last_week.avg_hr || "—",
-                fourWeek: running.four_week_avg.avg_hr || "—",
-                twelveWeek: running.twelve_week_avg.avg_hr || "—",
+                metric: "Elevation (m)",
+                thisWeek: running.this_week.elevation_m || 0,
+                lastWeek: running.last_week.elevation_m || 0,
+                fourWeek: running.four_week_avg.elevation_m || 0,
+                twelveWeek: running.twelve_week_avg.elevation_m || 0,
               },
             ]}
           />
@@ -93,37 +154,20 @@ export default function WeeklyDashboard({
 
       {/* Lifting */}
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold flex items-center gap-2">
-          <span className="text-xl">&#x1F3CB;&#xFE0F;</span> Lifting
-          Performance
-        </h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <span className="text-xl">&#x1F3CB;&#xFE0F;</span> Lifting Performance
+          </h2>
+          <Link href="/lifting" className="text-sm text-violet-400 hover:text-violet-300 transition-colors">
+            View details &rarr;
+          </Link>
+        </div>
 
-        <div className="bg-gray-900 border border-gray-800 rounded-lg p-4">
-          <ComparisonTable
-            title="Metric"
-            rows={[
-              {
-                metric: "Workouts",
-                thisWeek: lifting.this_week.workouts,
-                lastWeek: lifting.last_week.workouts,
-              },
-              {
-                metric: "Total Sets",
-                thisWeek: lifting.this_week.total_sets,
-                lastWeek: lifting.last_week.total_sets,
-              },
-              {
-                metric: "Volume (lbs)",
-                thisWeek: lifting.this_week.volume_lbs.toLocaleString(),
-                lastWeek: lifting.last_week.volume_lbs.toLocaleString(),
-              },
-              {
-                metric: "Duration",
-                thisWeek: lifting.this_week.duration || "—",
-                lastWeek: lifting.last_week.duration || "—",
-              },
-            ]}
-          />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <StatCard label="Workouts" value={lifting.this_week.workouts} prevValue={lifting.last_week.workouts} color="text-violet-400" />
+          <StatCard label="Sets" value={lifting.this_week.total_sets} prevValue={lifting.last_week.total_sets} color="text-violet-400" />
+          <StatCard label="Volume" value={lifting.this_week.volume_lbs.toLocaleString()} prevValue={lifting.last_week.volume_lbs.toLocaleString()} color="text-violet-400" suffix=" lbs" />
+          <StatCard label="Duration" value={lifting.this_week.duration || "—"} prevValue={lifting.last_week.duration || "—"} color="text-violet-400" />
         </div>
 
         {lifting.key_lifts && lifting.key_lifts.length > 0 && (
@@ -136,54 +180,28 @@ export default function WeeklyDashboard({
       {/* Nutrition */}
       {nutrition && (
         <section className="space-y-4">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
-            <span className="text-xl">&#x1F37D;&#xFE0F;</span> Nutrition
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <span className="text-xl">&#x1F37D;&#xFE0F;</span> Nutrition
+            </h2>
+            <Link href="/nutrition" className="text-sm text-amber-400 hover:text-amber-300 transition-colors">
+              View details &rarr;
+            </Link>
+          </div>
 
-          <div className="bg-gray-900 border border-gray-800 rounded-lg p-4">
-            <ComparisonTable
-              title="Metric"
-              rows={[
-                {
-                  metric: "Calories",
-                  thisWeek: nutrition.this_week.avg_calories,
-                  lastWeek: nutrition.last_week?.avg_calories ?? "—",
-                },
-                {
-                  metric: "Protein",
-                  thisWeek: `${nutrition.this_week.avg_protein_g}g`,
-                  lastWeek: nutrition.last_week
-                    ? `${nutrition.last_week.avg_protein_g}g`
-                    : "—",
-                },
-                {
-                  metric: "Carbs",
-                  thisWeek: `${nutrition.this_week.avg_carbs_g}g`,
-                  lastWeek: nutrition.last_week
-                    ? `${nutrition.last_week.avg_carbs_g}g`
-                    : "—",
-                },
-                {
-                  metric: "Fat",
-                  thisWeek: `${nutrition.this_week.avg_fat_g}g`,
-                  lastWeek: nutrition.last_week
-                    ? `${nutrition.last_week.avg_fat_g}g`
-                    : "—",
-                },
-              ]}
-            />
-
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <StatCard label="Avg Calories" value={nutrition.this_week.avg_calories} prevValue={nutrition.last_week?.avg_calories} color="text-amber-400" />
+            <StatCard label="Avg Protein" value={`${nutrition.this_week.avg_protein_g}g`} prevValue={nutrition.last_week ? `${nutrition.last_week.avg_protein_g}g` : undefined} color="text-amber-400" />
+            <StatCard label="Days Tracked" value={`${nutrition.this_week.days_tracked}/7`} color="text-amber-400" />
             {nutrition.training_day_avg_cal && nutrition.rest_day_avg_cal && (
-              <p className="mt-3 text-sm text-gray-400">
-                Training day avg: {nutrition.training_day_avg_cal} cal |
-                Rest day avg: {nutrition.rest_day_avg_cal} cal |
-                Delta: +{nutrition.training_day_avg_cal - nutrition.rest_day_avg_cal} cal
-              </p>
+              <div className="bg-gray-900 border border-gray-800 rounded-xl p-3">
+                <p className="text-xs text-gray-500 mb-1">Train vs Rest</p>
+                <p className="text-sm font-semibold text-amber-400">
+                  {nutrition.training_day_avg_cal} / {nutrition.rest_day_avg_cal}
+                </p>
+                <p className="text-xs text-gray-500">cal/day</p>
+              </div>
             )}
-
-            <p className="text-xs text-gray-500 mt-2">
-              Days tracked: {nutrition.this_week.days_tracked}/7
-            </p>
           </div>
 
           {/* Calorie adherence callout */}
@@ -195,16 +213,16 @@ export default function WeeklyDashboard({
             let color = "";
             if (pct >= 90 && pct <= 110) {
               msg = `Calorie adherence: ${pct}% — right on target.`;
-              color = "border-green-400/20 bg-green-400/10 text-green-400";
+              color = "border-emerald-400/20 bg-emerald-400/10 text-emerald-400";
             } else if (pct < 90) {
               msg = `Calorie adherence: ${pct}% — you're under-eating. Fuel your training.`;
-              color = "border-yellow-400/20 bg-yellow-400/10 text-yellow-400";
+              color = "border-amber-400/20 bg-amber-400/10 text-amber-400";
             } else {
               msg = `Calorie adherence: ${pct}% — slightly over target.`;
               color = "border-blue-400/20 bg-blue-400/10 text-blue-400";
             }
             return (
-              <div className={`p-3 rounded-md border text-sm ${color}`}>
+              <div className={`p-3 rounded-lg border text-sm ${color}`}>
                 {msg}
               </div>
             );
@@ -215,36 +233,73 @@ export default function WeeklyDashboard({
       {/* Next Week */}
       <section className="space-y-3">
         <h2 className="text-lg font-semibold flex items-center gap-2">
-          <span className="text-xl">&#x1F4C5;</span> Next Week
+          <span className="text-xl">&#x1F4C5;</span> Next Week Preview
         </h2>
-        <div className="bg-gray-900 border border-gray-800 rounded-lg p-4 overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-gray-500 text-left border-b border-gray-800">
-                <th className="pb-2 font-medium">Day</th>
-                <th className="pb-2 font-medium">Date</th>
-                <th className="pb-2 font-medium">Planned</th>
-              </tr>
-            </thead>
-            <tbody>
-              {next_week.map((day) => {
-                const parts = [];
-                if (day.gym) parts.push(`\uD83C\uDFCB\uFE0F ${day.gym}`);
-                if (day.run) parts.push(`\uD83C\uDFC3 ${day.run}`);
-                return (
-                  <tr key={day.date} className="border-b border-gray-800/50 text-gray-300">
-                    <td className="py-2">{day.day_name.slice(0, 3)}</td>
-                    <td className="py-2 text-gray-500">{day.date.slice(5)}</td>
-                    <td className="py-2">
-                      {parts.length > 0 ? parts.join(" + ") : "Rest"}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 overflow-x-auto">
+          <div className="grid grid-cols-7 gap-2 min-w-[500px]">
+            {next_week.map((day) => {
+              const hasGym = !!day.gym;
+              const hasRun = !!day.run;
+              const isRest = !hasGym && !hasRun;
+              return (
+                <div
+                  key={day.date}
+                  className={`rounded-lg p-3 text-center text-xs ${
+                    isRest
+                      ? "bg-gray-800/50 border border-gray-700/50"
+                      : "bg-gray-800 border border-gray-700"
+                  }`}
+                >
+                  <p className="font-semibold text-gray-300 mb-1">{day.day_name.slice(0, 3)}</p>
+                  <p className="text-gray-500 text-[10px] mb-2">{day.date.slice(5)}</p>
+                  {hasRun && (
+                    <p className="text-blue-400 truncate" title={day.run}>
+                      &#x1F3C3; {day.run}
+                    </p>
+                  )}
+                  {hasGym && (
+                    <p className="text-violet-400 truncate" title={day.gym}>
+                      &#x1F3CB;&#xFE0F; {day.gym}
+                    </p>
+                  )}
+                  {isRest && <p className="text-gray-600">Rest</p>}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </section>
+    </div>
+  );
+}
+
+function StatCard({
+  label,
+  value,
+  prevValue,
+  color = "text-white",
+  suffix = "",
+}: {
+  label: string;
+  value: string | number;
+  prevValue?: string | number;
+  color?: string;
+  suffix?: string;
+}) {
+  const showDelta = prevValue !== undefined && typeof value === "number" && typeof prevValue === "number";
+  const delta = showDelta ? (value as number) - (prevValue as number) : 0;
+
+  return (
+    <div className="bg-gray-900 border border-gray-800 rounded-xl p-3">
+      <p className="text-xs text-gray-500 mb-1">{label}</p>
+      <p className={`text-lg font-bold ${color}`}>
+        {value}{suffix && typeof value !== "string" ? suffix : ""}
+      </p>
+      {showDelta && delta !== 0 && (
+        <p className={`text-xs ${delta > 0 ? "text-emerald-400" : "text-red-400"}`}>
+          {delta > 0 ? "+" : ""}{Math.round(delta * 10) / 10} vs last wk
+        </p>
+      )}
     </div>
   );
 }
