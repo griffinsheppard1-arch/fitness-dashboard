@@ -1,4 +1,5 @@
 import { getRacePrepData } from "@/lib/api";
+import LoadingError from "@/components/LoadingError";
 import RaceCountdown from "@/components/race/RaceCountdown";
 import TaperTracker from "@/components/race/TaperTracker";
 import ReadinessScore from "@/components/race/ReadinessScore";
@@ -31,14 +32,10 @@ export default async function RacePrepPage() {
     );
   } catch (error) {
     return (
-      <div className="text-center py-20">
-        <p className="text-gray-400 text-lg">Unable to load race prep data</p>
-        <p className="text-gray-600 text-sm mt-2">
-          {error instanceof Error
-            ? error.message
-            : "Server may be waking up. Try again in a minute."}
-        </p>
-      </div>
+      <LoadingError
+        tabName="race prep"
+        errorMessage={error instanceof Error ? error.message : undefined}
+      />
     );
   }
 }

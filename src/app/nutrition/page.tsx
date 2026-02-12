@@ -1,4 +1,5 @@
 import { getNutritionDetail } from "@/lib/api";
+import LoadingError from "@/components/LoadingError";
 import NutritionOverview from "@/components/nutrition/NutritionOverview";
 import CalorieTrend from "@/components/nutrition/CalorieTrend";
 import MacroBreakdown from "@/components/nutrition/MacroBreakdown";
@@ -38,14 +39,10 @@ export default async function NutritionPage() {
     );
   } catch (error) {
     return (
-      <div className="text-center py-20">
-        <p className="text-gray-400 text-lg">Unable to load nutrition data</p>
-        <p className="text-gray-600 text-sm mt-2">
-          {error instanceof Error
-            ? error.message
-            : "Server may be waking up. Try again in a minute."}
-        </p>
-      </div>
+      <LoadingError
+        tabName="nutrition"
+        errorMessage={error instanceof Error ? error.message : undefined}
+      />
     );
   }
 }

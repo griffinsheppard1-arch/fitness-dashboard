@@ -1,5 +1,6 @@
 import { getWeeklyData, getRunningTrend, getLiftingTrend } from "@/lib/api";
 import WeeklyDashboard from "@/components/WeeklyDashboard";
+import LoadingError from "@/components/LoadingError";
 
 export const revalidate = 300; // ISR: 5 minutes
 
@@ -15,12 +16,10 @@ export default async function WeeklyPage() {
     );
   } catch (error) {
     return (
-      <div className="text-center py-20">
-        <p className="text-gray-400 text-lg">Unable to load weekly summary</p>
-        <p className="text-gray-600 text-sm mt-2">
-          {error instanceof Error ? error.message : "Server may be waking up. Try again in a minute."}
-        </p>
-      </div>
+      <LoadingError
+        tabName="weekly summary"
+        errorMessage={error instanceof Error ? error.message : undefined}
+      />
     );
   }
 }

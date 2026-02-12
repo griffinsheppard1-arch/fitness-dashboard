@@ -3,6 +3,7 @@ import RunOverview from "@/components/running/RunOverview";
 import RecentRuns from "@/components/running/RecentRuns";
 import PerformanceCharts from "@/components/running/PerformanceCharts";
 import PlanCompliance from "@/components/running/PlanCompliance";
+import LoadingError from "@/components/LoadingError";
 
 export const revalidate = 300; // ISR: 5 minutes
 
@@ -54,14 +55,10 @@ export default async function RunningPage() {
     );
   } catch (error) {
     return (
-      <div className="text-center py-20">
-        <p className="text-gray-400 text-lg">Unable to load running data</p>
-        <p className="text-gray-600 text-sm mt-2">
-          {error instanceof Error
-            ? error.message
-            : "Server may be waking up. Try again in a minute."}
-        </p>
-      </div>
+      <LoadingError
+        tabName="running"
+        errorMessage={error instanceof Error ? error.message : undefined}
+      />
     );
   }
 }

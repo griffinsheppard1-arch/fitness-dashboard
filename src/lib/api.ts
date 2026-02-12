@@ -16,14 +16,20 @@ const API_URL =
 const API_KEY = process.env.API_KEY || "";
 
 async function fetchAPI<T>(path: string, revalidate = 300): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
-    headers: { Authorization: `Bearer ${API_KEY}` },
-    next: { revalidate },
-  });
-  if (!res.ok) {
+  const maxRetries = 2;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const res = await fetch(`${API_URL}${path}`, {
+      headers: { Authorization: `Bearer ${API_KEY}` },
+      next: { revalidate },
+    });
+    if (res.ok) return res.json();
+    if (attempt < maxRetries && [502, 503, 504].includes(res.status)) {
+      await new Promise((r) => setTimeout(r, 3000 * (attempt + 1)));
+      continue;
+    }
     throw new Error(`API error ${res.status}: ${await res.text()}`);
   }
-  return res.json();
+  throw new Error("Max retries exceeded");
 }
 
 // Existing endpoints

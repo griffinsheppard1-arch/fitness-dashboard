@@ -28,6 +28,16 @@ function formatPace(totalSeconds: number): string {
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
+function generatePaceTicks(min: number, max: number): number[] {
+  const interval = 30;
+  const start = Math.floor(min / interval) * interval;
+  const ticks = [];
+  for (let v = start; v <= max; v += interval) {
+    ticks.push(v);
+  }
+  return ticks;
+}
+
 const tooltipStyle = {
   backgroundColor: "#111827",
   border: "1px solid #374151",
@@ -48,14 +58,24 @@ export default function PerformanceCharts({ trend }: PerformanceChartsProps) {
     .map((d) => ({
       week: shortWeek(d.week_start),
       pace_seconds: d.pace_seconds!,
-      pace: d.pace || formatPace(d.pace_seconds!),
     }));
 
-  // Calculate domain for inverted pace axis (faster = higher on chart)
+  const hrData = trend
+    .filter((d) => d.avg_hr && d.avg_hr > 0)
+    .map((d) => ({
+      week: shortWeek(d.week_start),
+      avg_hr: d.avg_hr!,
+    }));
+
+  // Pace axis domain + ticks
   const paceValues = paceData.map((d) => d.pace_seconds);
   const minPace = Math.min(...paceValues);
   const maxPace = Math.max(...paceValues);
   const pacePadding = 15;
+  const paceTicks = generatePaceTicks(
+    minPace - pacePadding,
+    maxPace + pacePadding
+  );
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -89,7 +109,7 @@ export default function PerformanceCharts({ trend }: PerformanceChartsProps) {
             <Tooltip
               contentStyle={tooltipStyle}
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              formatter={(value: any) => [`${value} mi`, "Miles"]}
+              formatter={(value: any) => [`${value} miles`]}
             />
             <Bar
               dataKey="miles"
@@ -120,6 +140,7 @@ export default function PerformanceCharts({ trend }: PerformanceChartsProps) {
             <YAxis
               reversed
               domain={[minPace - pacePadding, maxPace + pacePadding]}
+              ticks={paceTicks}
               tick={{ fill: "#9ca3af", fontSize: 11 }}
               stroke="#374151"
               tickFormatter={(val: number) => formatPace(val)}
@@ -134,17 +155,19 @@ export default function PerformanceCharts({ trend }: PerformanceChartsProps) {
             <Tooltip
               contentStyle={tooltipStyle}
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              formatter={(value: any) => [
-                `${formatPace(value)}/mi`,
-                "Pace",
-              ]}
+              formatter={(value: any) => [`${formatPace(value)} /mi`]}
             />
             <Line
               type="monotone"
               dataKey="pace_seconds"
               stroke="#3b82f6"
               strokeWidth={2}
-              dot={{ r: 4, fill: "#3b82f6", stroke: "#1e3a5f", strokeWidth: 2 }}
+              dot={{
+                r: 4,
+                fill: "#3b82f6",
+                stroke: "#1e3a5f",
+                strokeWidth: 2,
+              }}
               activeDot={{ r: 6, fill: "#60a5fa" }}
               connectNulls
             />
@@ -154,6 +177,62 @@ export default function PerformanceCharts({ trend }: PerformanceChartsProps) {
           Lower on chart = faster pace
         </p>
       </div>
+
+      {/* Heart Rate Trend */}
+      {hrData.length > 2 && (
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 lg:col-span-2">
+          <h3 className="text-sm font-semibold text-gray-300 mb-4">
+            Average Heart Rate
+          </h3>
+          <ResponsiveContainer width="100%" height={240}>
+            <LineChart data={hrData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
+              <XAxis
+                dataKey="week"
+                tick={{ fill: "#9ca3af", fontSize: 11 }}
+                stroke="#374151"
+                angle={-45}
+                textAnchor="end"
+                height={60}
+              />
+              <YAxis
+                tick={{ fill: "#9ca3af", fontSize: 11 }}
+                stroke="#374151"
+                domain={["dataMin - 5", "dataMax + 5"]}
+                label={{
+                  value: "BPM",
+                  angle: -90,
+                  position: "insideLeft",
+                  fill: "#9ca3af",
+                  fontSize: 11,
+                }}
+              />
+              <Tooltip
+                contentStyle={tooltipStyle}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                formatter={(value: any) => [`${Math.round(value)} bpm`]}
+              />
+              <Line
+                type="monotone"
+                dataKey="avg_hr"
+                stroke="#f43f5e"
+                strokeWidth={2}
+                dot={{
+                  r: 4,
+                  fill: "#f43f5e",
+                  stroke: "#881337",
+                  strokeWidth: 2,
+                }}
+                activeDot={{ r: 6, fill: "#fb7185" }}
+                connectNulls
+              />
+            </LineChart>
+          </ResponsiveContainer>
+          <p className="text-xs text-gray-500 mt-2 text-center">
+            Lower average HR at same pace = improving aerobic fitness
+          </p>
+        </div>
+      )}
     </div>
   );
 }

@@ -23,6 +23,13 @@ const PROGRESSION_COLORS = [
   "#e879f9", // fuchsia-400
 ];
 
+const tooltipStyle = {
+  backgroundColor: "#111827",
+  border: "1px solid #374151",
+  borderRadius: "8px",
+  color: "#e5e7eb",
+};
+
 function shortWeek(dateStr: string): string {
   const d = new Date(dateStr + "T00:00:00");
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -37,39 +44,24 @@ export default function VolumeCharts({
   weeklyTrend,
   progression,
 }: VolumeChartsProps) {
-  // --- Weekly volume bar chart data ---
   const volumeData = weeklyTrend.map((d) => ({
     week: shortWeek(d.week_start),
-    volume: d.volume_lbs,
     sets: d.total_sets,
     workouts: d.workouts,
   }));
 
-  // --- 1RM progression multi-line data ---
   const top6 = progression.slice(0, 6);
-
   const weekSet = new Set<string>();
   top6.forEach((ex) => ex.trend.forEach((t) => weekSet.add(t.week_start)));
   const weeks = Array.from(weekSet).sort();
 
-  const progressionData = weeks.map((week) => {
-    const point: Record<string, string | number | null> = {
-      week: shortWeek(week),
-    };
-    top6.forEach((ex) => {
-      const match = ex.trend.find((t) => t.week_start === week);
-      point[ex.name] = match?.est_1rm_lbs ?? null;
-    });
-    return point;
-  });
-
   return (
     <div className="space-y-6">
-      {/* Weekly Volume Bar Chart */}
+      {/* Weekly Sets & Workouts */}
       {volumeData.length > 0 && (
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
           <h3 className="text-sm font-semibold text-gray-300 mb-3">
-            Weekly Volume
+            Weekly Training Load
           </h3>
           <ResponsiveContainer width="100%" height={240}>
             <BarChart data={volumeData}>
@@ -80,29 +72,46 @@ export default function VolumeCharts({
                 stroke="#374151"
               />
               <YAxis
+                yAxisId="sets"
                 tick={{ fill: "#9ca3af", fontSize: 11 }}
                 stroke="#374151"
-                tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
+              />
+              <YAxis
+                yAxisId="workouts"
+                orientation="right"
+                tick={{ fill: "#9ca3af", fontSize: 11 }}
+                stroke="#374151"
+                domain={[0, "dataMax + 1"]}
               />
               <Tooltip
-                contentStyle={{
-                  backgroundColor: "#111827",
-                  border: "1px solid #374151",
-                  borderRadius: "8px",
-                  color: "#e5e7eb",
-                }}
+                contentStyle={tooltipStyle}
+                labelFormatter={(label) => `Week of ${label}`}
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 formatter={(value: any, name: any) => {
-                  if (name === "volume")
-                    return [`${Number(value).toLocaleString()} lbs`, "Volume"];
+                  if (name === "sets") return [`${value} sets`, "Total Sets"];
+                  if (name === "workouts")
+                    return [`${value} sessions`, "Workouts"];
                   return [value, name];
                 }}
-                labelFormatter={(label) => `Week of ${label}`}
+              />
+              <Legend
+                wrapperStyle={{ color: "#9ca3af", fontSize: 11 }}
+                formatter={(value) =>
+                  value === "sets" ? "Total Sets" : "Workouts"
+                }
               />
               <Bar
-                dataKey="volume"
+                yAxisId="sets"
+                dataKey="sets"
                 fill="#8b5cf6"
                 fillOpacity={0.75}
+                radius={[4, 4, 0, 0]}
+              />
+              <Bar
+                yAxisId="workouts"
+                dataKey="workouts"
+                fill="#a78bfa"
+                fillOpacity={0.5}
                 radius={[4, 4, 0, 0]}
               />
             </BarChart>
@@ -110,55 +119,103 @@ export default function VolumeCharts({
         </div>
       )}
 
-      {/* 1RM Progression Multi-Line Chart */}
-      {progressionData.length > 1 && top6.length > 0 && (
+      {/* 1RM Progression — Individual Mini-Charts */}
+      {top6.length > 0 && weeks.length > 1 && (
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-          <h3 className="text-sm font-semibold text-gray-300 mb-3">
+          <h3 className="text-sm font-semibold text-gray-300 mb-4">
             Est 1RM Progression
           </h3>
-          <ResponsiveContainer width="100%" height={280}>
-            <LineChart data={progressionData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-              <XAxis
-                dataKey="week"
-                tick={{ fill: "#9ca3af", fontSize: 11 }}
-                stroke="#374151"
-              />
-              <YAxis
-                tick={{ fill: "#9ca3af", fontSize: 11 }}
-                stroke="#374151"
-                label={{
-                  value: "Est 1RM (lbs)",
-                  angle: -90,
-                  position: "insideLeft",
-                  fill: "#9ca3af",
-                  fontSize: 11,
-                }}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#111827",
-                  border: "1px solid #374151",
-                  borderRadius: "8px",
-                  color: "#e5e7eb",
-                }}
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                formatter={(value: any) => [`${Number(value)} lbs`]}
-              />
-              <Legend wrapperStyle={{ color: "#9ca3af", fontSize: 11 }} />
-              {top6.map((ex, i) => (
-                <Line
-                  key={ex.name}
-                  type="monotone"
-                  dataKey={ex.name}
-                  stroke={PROGRESSION_COLORS[i % PROGRESSION_COLORS.length]}
-                  strokeWidth={2}
-                  dot={{ r: 3 }}
-                  connectNulls
-                />
-              ))}
-            </LineChart>
-          </ResponsiveContainer>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {top6.map((ex, i) => {
+              const exData = weeks
+                .map((week) => {
+                  const match = ex.trend.find((t) => t.week_start === week);
+                  return match
+                    ? { week: shortWeek(week), est_1rm: match.est_1rm_lbs }
+                    : null;
+                })
+                .filter(
+                  (d): d is { week: string; est_1rm: number } => d !== null
+                );
+
+              if (exData.length < 2) return null;
+
+              const values = exData.map((d) => d.est_1rm);
+              const min = Math.min(...values);
+              const max = Math.max(...values);
+              const padding = Math.max((max - min) * 0.15, 5);
+              const first = values[0];
+              const last = values[values.length - 1];
+              const change = last - first;
+
+              return (
+                <div key={ex.name} className="bg-gray-950 rounded-lg p-3">
+                  <div className="flex items-baseline justify-between mb-1">
+                    <p className="text-xs text-gray-400 truncate max-w-[70%]">
+                      {ex.name}
+                    </p>
+                    <span
+                      className={`text-xs font-medium ${
+                        change > 0
+                          ? "text-emerald-400"
+                          : change < 0
+                            ? "text-red-400"
+                            : "text-gray-500"
+                      }`}
+                    >
+                      {change > 0 ? "+" : ""}
+                      {Math.round(change)} lbs
+                    </span>
+                  </div>
+                  <p className="text-lg font-bold text-purple-400 mb-2">
+                    {Math.round(last)} lbs
+                  </p>
+                  <ResponsiveContainer width="100%" height={100}>
+                    <LineChart data={exData}>
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke="#1f2937"
+                        vertical={false}
+                      />
+                      <XAxis
+                        dataKey="week"
+                        tick={{ fill: "#6b7280", fontSize: 9 }}
+                        stroke="#374151"
+                        interval="preserveStartEnd"
+                      />
+                      <YAxis
+                        tick={{ fill: "#6b7280", fontSize: 9 }}
+                        stroke="#374151"
+                        domain={[
+                          Math.floor(min - padding),
+                          Math.ceil(max + padding),
+                        ]}
+                        width={35}
+                      />
+                      <Tooltip
+                        contentStyle={tooltipStyle}
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        formatter={(value: any) => [
+                          `${Math.round(Number(value))} lbs`,
+                          "Est 1RM",
+                        ]}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="est_1rm"
+                        stroke={
+                          PROGRESSION_COLORS[i % PROGRESSION_COLORS.length]
+                        }
+                        strokeWidth={2}
+                        dot={{ r: 2 }}
+                        connectNulls
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>

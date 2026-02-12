@@ -73,6 +73,12 @@ export default function RecentRuns({ runs }: RecentRunsProps) {
               <th className="px-4 py-3 font-medium text-right hidden md:table-cell">
                 Elev
               </th>
+              <th className="px-4 py-3 font-medium text-right hidden lg:table-cell">
+                Cadence
+              </th>
+              <th className="px-4 py-3 font-medium text-right hidden xl:table-cell">
+                Stride
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -126,11 +132,19 @@ export default function RecentRuns({ runs }: RecentRunsProps) {
                         ? formatElevation(run.elevation_m)
                         : "---"}
                     </td>
+                    <td className="px-4 py-3 text-right hidden lg:table-cell text-gray-400">
+                      {run.cadence ? `${run.cadence} spm` : "---"}
+                    </td>
+                    <td className="px-4 py-3 text-right hidden xl:table-cell text-gray-400">
+                      {run.stride_length
+                        ? `${run.stride_length} m`
+                        : "---"}
+                    </td>
                   </tr>
 
                   {isExpanded && run.splits && run.splits.length > 0 && (
                     <tr>
-                      <td colSpan={7} className="px-4 py-3 bg-gray-950/50">
+                      <td colSpan={9} className="px-4 py-3 bg-gray-950/50">
                         <div className="pl-4 border-l-2 border-blue-500/30">
                           <p className="text-xs font-medium text-gray-500 mb-2">
                             Mile Splits

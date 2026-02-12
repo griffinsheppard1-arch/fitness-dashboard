@@ -11,6 +11,11 @@ export async function POST(request: NextRequest) {
 
   revalidatePath("/daily");
   revalidatePath("/weekly");
+  revalidatePath("/running");
+  revalidatePath("/lifting");
+  revalidatePath("/nutrition");
+  revalidatePath("/race");
+  revalidatePath("/injuries");
 
   return NextResponse.json({ revalidated: true, now: Date.now() });
 }
