@@ -9,6 +9,7 @@ import type {
   LiftingRoutinesData,
   NutritionDetailData,
   RacePrepData,
+  InjuriesDetailData,
 } from "./types";
 
 const API_URL =
@@ -76,4 +77,8 @@ export async function getNutritionDetail(): Promise<NutritionDetailData> {
 
 export async function getRacePrepData(): Promise<RacePrepData> {
   return fetchAPI<RacePrepData>("/api/race/prep");
+}
+
+export async function getInjuriesDetail(): Promise<InjuriesDetailData> {
+  return fetchAPI<InjuriesDetailData>("/api/injuries/detail");
 }

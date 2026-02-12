@@ -10,6 +10,7 @@ const tabs = [
   { href: "/lifting", label: "Lifting", icon: "🏋️" },
   { href: "/nutrition", label: "Nutrition", icon: "🥗" },
   { href: "/race", label: "Race Prep", icon: "🏁" },
+  { href: "/injuries", label: "Injuries", icon: "🩹" },
 ];
 
 export function NavBar() {

@@ -502,3 +502,68 @@ export interface RacePrepData {
     quality_sessions: number;
   };
 }
+
+// ============================================================
+// Injuries Tab
+// ============================================================
+export interface Injury {
+  id: number;
+  body_part: string;
+  body_side?: string | null;
+  injury_type: string;
+  severity: number;
+  onset_date: string;
+  resolved_date?: string | null;
+  description?: string | null;
+  notes?: string | null;
+  status: "active" | "recovering" | "resolved";
+  days_since_onset: number;
+  duration_days: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface BodyPartHeatmap {
+  body_part: string;
+  body_side?: string | null;
+  injury_count: number;
+  avg_severity: number;
+  max_severity: number;
+  active_count: number;
+}
+
+export interface WorkoutModification {
+  injury_type: string;
+  body_part: string;
+  severity: number;
+  running_mod?: string;
+  lifting_mod?: string;
+}
+
+export interface InjuryFormData {
+  body_part: string;
+  body_side?: string | null;
+  injury_type: string;
+  severity: number;
+  onset_date: string;
+  resolved_date?: string | null;
+  description?: string;
+  notes?: string;
+  status: "active" | "recovering" | "resolved";
+}
+
+export interface InjuriesDetailData {
+  available: boolean;
+  overview: {
+    total_injuries: number;
+    active_injuries: number;
+    most_affected_area?: string | null;
+    avg_recovery_days?: number | null;
+  };
+  injuries: Injury[];
+  active_injuries: Injury[];
+  heatmap: BodyPartHeatmap[];
+  modifications: WorkoutModification[];
+  upcoming_runs: { date: string; summary?: string; distance_miles?: number }[];
+  today_routine?: { name: string; exercises: string[] } | null;
+}
